@@ -1,16 +1,23 @@
-import { Body, Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './passport/local-auth.guard';
 import { Public } from '@/decorator/customize';
 import { CreateAuthDto } from './dto/create-auth.dto';
-import { MailerModule, MailerService } from '@nestjs-modules/mailer';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly mailerService: MailerService,
-  ) { }
+  ) {}
 
   @Post('login')
   @Public()
@@ -33,7 +40,11 @@ export class AuthController {
         to: 'daisukeninomiya0375@gmail.com', // list of receivers
         subject: 'Testing Nest MailerModule ✔', // Subject line
         text: 'welcome', // plaintext body
-        html: '<b>hello world</b>', // HTML body content
+        template: 'register',
+        context: {
+          name: 'test',
+          activationCode: 123456, // variable to be replaced in template
+        },
       })
       .then(() => {})
       .catch(() => {});
