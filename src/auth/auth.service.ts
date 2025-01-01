@@ -9,7 +9,7 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.usersService.findByEmail(email);
@@ -37,5 +37,9 @@ export class AuthService {
 
   checkCode = async (data: CodeAuthDto) => {
     return await this.usersService.handleActive(data);
+  };
+
+  retryActive = async (data: string) => {
+    return await this.usersService.retryActive(data);
   };
 }

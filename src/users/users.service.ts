@@ -151,4 +151,34 @@ export class UsersService {
       throw new BadRequestException('有効期限が切れています。');
     }
   }
+  async retryActive(email: string) {
+    // check email
+    const user = await this.userModel.findOne({ email });
+
+    if (!user) {
+      throw new BadRequestException('アカウントが存在しません。');
+    }
+
+    if (user.isActive) {
+      throw new BadRequestException('アカウントは既に有効です。');
+    }
+    // send Email
+    const codeId = uuidv4();
+
+    // update codeId and expiredTime
+    await user.updateOne({
+      codeId,
+      codeExpired: dayjs().add(10, 'minutes'),
+    });
+    this.mailerServece.sendMail({
+      to: user.email, // list of receivers
+      subject: 'Active your account', // Subject line
+      template: 'register',
+      context: {
+        name: user.name ?? user.email,
+        activationCode: codeId, // variable to be replaced in template
+      },
+    });
+    return { _id: user._id };
+  }
 }

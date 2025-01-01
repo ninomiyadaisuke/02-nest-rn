@@ -17,7 +17,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly mailerService: MailerService,
-  ) {}
+  ) { }
 
   @Post('login')
   @Public()
@@ -39,6 +39,11 @@ export class AuthController {
     return this.authService.checkCode(codeAuthDto);
   }
 
+  @Post('retry-active')
+  @Public()
+  retryActive(@Body('email') email: string) {
+    return this.authService.retryActive(email);
+  }
   @Get('mail')
   @Public()
   testMail() {
@@ -53,8 +58,8 @@ export class AuthController {
           activationCode: 123456, // variable to be replaced in template
         },
       })
-      .then(() => {})
-      .catch(() => {});
+      .then(() => { })
+      .catch(() => { });
     return 'ok';
   }
 }
