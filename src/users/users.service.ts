@@ -7,7 +7,7 @@ import { Model } from 'mongoose';
 import { hashPasswordHelper } from '@/helpers/util';
 import aqp from 'api-query-params';
 import mongoose from 'mongoose';
-import { CreateAuthDto } from '@/auth/dto/create-auth.dto';
+import { CodeAuthDto, CreateAuthDto } from '@/auth/dto/create-auth.dto';
 import { v4 as uuidv4 } from 'uuid'
 import dayjs from 'dayjs';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -16,7 +16,7 @@ export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     private readonly mailerServece: MailerService,
-  ) {}
+  ) { }
 
   isEmailExist = async (email: string) => {
     const user = await this.userModel.exists({ email });
@@ -108,7 +108,7 @@ export class UsersService {
       password: hashPassword,
       isActive: false,
       codeId,
-      codeExpired: dayjs().add(5, 'minutes'),
+      codeExpired: dayjs().add(10, 'minutes'),
     });
     // send email
 
@@ -126,5 +126,29 @@ export class UsersService {
       _id: user._id,
     };
 
+  }
+
+  async handleActive(data: CodeAuthDto) {
+    const user = await this.userModel.findOne({
+      codeId: data.code,
+      _id: data._id,
+    });
+    if (!user) {
+      throw new BadRequestException('無効なコードです。');
+    }
+
+    // check expre code
+    const isBeforeCheck = dayjs().isBefore(user.codeExpired);
+    if (isBeforeCheck) {
+      // valid update user
+      await this.userModel.updateOne({
+        _id: data._id,
+      },
+        { isActive: true },
+      );
+      return { isBeforeCheck };
+    } else {
+      throw new BadRequestException('有効期限が切れています。');
+    }
   }
 }

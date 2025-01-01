@@ -9,3 +9,10 @@ export class CreateAuthDto {
   @IsOptional()
   name: string;
 }
+
+export class CodeAuthDto {
+  @IsNotEmpty({ message: 'idが空欄です。' })
+  _id: string;
+  @IsNotEmpty({ message: 'codeが空欄です。' })
+  code: string;
+}
