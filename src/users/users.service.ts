@@ -7,7 +7,7 @@ import { Model } from 'mongoose';
 import { hashPasswordHelper } from '@/helpers/util';
 import aqp from 'api-query-params';
 import mongoose from 'mongoose';
-import { CodeAuthDto, CreateAuthDto } from '@/auth/dto/create-auth.dto';
+import { ChangePasswordAuthDto, CodeAuthDto, CreateAuthDto } from '@/auth/dto/create-auth.dto';
 import { v4 as uuidv4 } from 'uuid'
 import dayjs from 'dayjs';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -180,5 +180,57 @@ export class UsersService {
       },
     });
     return { _id: user._id };
+  }
+
+  async retryPassword(email: string) {
+    // check email
+    const user = await this.userModel.findOne({ email });
+
+    if (!user) {
+      throw new BadRequestException('アカウントが存在しません。');
+    }
+
+    // send Email
+    const codeId = uuidv4();
+
+    // update codeId and expiredTime
+    await user.updateOne({
+      codeId,
+      codeExpired: dayjs().add(10, 'minutes'),
+    });
+    this.mailerServece.sendMail({
+      to: user.email, // list of receivers
+      subject: 'Active your account', // Subject line
+      template: 'register',
+      context: {
+        name: user.name ?? user.email,
+        activationCode: codeId, // variable to be replaced in template
+      },
+    });
+    return { _id: user._id, email: user.email };
+  }
+
+  async changePassword(data: ChangePasswordAuthDto) {
+    const { email, password, confirmPassword } = data;
+    if (password !== confirmPassword) {
+      throw new BadRequestException('パスワードが一致しません。');
+    }
+    // check email
+    const user = await this.userModel.findOne({ email });
+
+    if (!user) {
+      throw new BadRequestException('アカウントが存在しません。');
+    }
+
+    // check expre code
+    const isBeforeCheck = dayjs().isBefore(user.codeExpired);
+    if (isBeforeCheck) {
+      // valid update password
+      const newPassword = await hashPasswordHelper(password);
+      await user.updateOne({ password: newPassword });
+      return { isBeforeCheck };
+    } else {
+      throw new BadRequestException('有効期限が切れています。');
+    }
   }
 }

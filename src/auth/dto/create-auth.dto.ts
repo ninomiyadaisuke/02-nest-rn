@@ -16,3 +16,14 @@ export class CodeAuthDto {
   @IsNotEmpty({ message: 'codeが空欄です。' })
   code: string;
 }
+
+export class ChangePasswordAuthDto {
+  @IsNotEmpty({ message: 'codeが空欄です。' })
+  code: string;
+  @IsNotEmpty({ message: 'passwordが空欄です。' })
+  password: string;
+  @IsNotEmpty({ message: 'confirmPasswordが空欄です。' })
+  confirmPassword: string;
+  @IsNotEmpty({ message: 'emailが空欄です。' })
+  email: string;
+}
